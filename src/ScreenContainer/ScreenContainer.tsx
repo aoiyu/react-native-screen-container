@@ -14,32 +14,29 @@ import {
   StyleSheet,
   View,
   ViewProps,
-} from 'react-native';
-import type { ReactNode } from 'react';
-import React, { useMemo, useState } from 'react';
-import { BlurView } from '@react-native-community/blur';
+} from "react-native";
+import type { ReactNode } from "react";
+import React, { useMemo, useState } from "react";
 
 export type ScreenContainerProps = {
   headerComponent?: ReactNode;
-  headerBackgroundComponent?: ReactNode;
   footerComponent?: ReactNode;
+  headerBackgroundComponent?: ReactNode;
   footerBackgroundComponent?: ReactNode;
-  headerBackground?: 'blurDark' | 'blurLight' | ColorValue | 'none';
-  footerBackground?: 'blurDark' | 'blurLight' | ColorValue | 'none';
+  headerBackgroundColor?: ColorValue;
+  footerBackgroundColor?: ColorValue;
   fadingRange?: number;
   overScroll?: boolean;
 } & ViewProps;
-
-const blurAmount = 32;
 
 export const ScreenContainer = (props: ScreenContainerProps) => {
   const {
     headerComponent,
     footerComponent,
-    // headerBackgroundComponent,
-    // footerBackgroundComponent,
-    headerBackground = 'blurLight',
-    footerBackground = 'blurLight',
+    headerBackgroundComponent,
+    footerBackgroundComponent,
+    headerBackgroundColor,
+    footerBackgroundColor,
     overScroll = true,
     children,
   } = props;
@@ -77,79 +74,60 @@ export const ScreenContainer = (props: ScreenContainerProps) => {
     ]
   );
 
-  const headerBackgroundComponent = useMemo(() => {
-    switch (headerBackground) {
-      case 'blurLight':
-      case 'blurDark':
-        return (
-          <BlurView
-            style={[
-              styles.headerBackground,
-              { opacity: headerBackgroundOpacity },
-            ]}
-            blurType={headerBackground === 'blurLight' ? 'light' : 'dark'}
-            blurAmount={blurAmount}
-            overlayColor={'transparent'}
-          />
-        );
-      case 'none':
-        return;
-      default:
-        return (
-          <View
-            style={[
-              styles.headerBackground,
-              {
-                backgroundColor: headerBackground,
-                opacity: headerBackgroundOpacity,
-              },
-            ]}
-          />
-        );
-    }
-  }, [headerBackgroundOpacity, headerBackground]);
+  const headerBackgroundComponentContainer = useMemo(() => {
+    return (
+      <View
+        style={[
+          styles.headerBackground,
+          {
+            backgroundColor: headerBackgroundColor,
+            opacity: headerBackgroundOpacity,
+          },
+        ]}
+      >
+        {headerBackgroundComponent}
+      </View>
+    );
+  }, [
+    headerBackgroundOpacity,
+    headerBackgroundComponent,
+    headerBackgroundColor,
+  ]);
 
-  const footerBackgroundComponent = useMemo(() => {
-    switch (footerBackground) {
-      case 'blurDark':
-      case 'blurLight':
-        return (
-          <BlurView
-            style={[
-              styles.footerBackground,
-              { opacity: footerBackgroundOpacity },
-            ]}
-            blurType={footerBackground === 'blurLight' ? 'light' : 'dark'}
-            blurAmount={blurAmount}
-            overlayColor={'transparent'}
-          />
-        );
-      case 'none':
-        return;
-      default:
-        return (
-          <View
-            style={[
-              styles.footerBackground,
-              {
-                backgroundColor: footerBackground,
-                opacity: footerBackgroundOpacity,
-              },
-            ]}
-          />
-        );
-    }
-  }, [footerBackgroundOpacity, footerBackground]);
+  const footerBackgroundComponentContainer = useMemo(() => {
+    return (
+      <View
+        style={[
+          styles.footerBackground,
+          {
+            backgroundColor: footerBackgroundColor,
+            opacity: footerBackgroundOpacity,
+          },
+        ]}
+      >
+        {footerBackgroundComponent}
+      </View>
+    );
+  }, [
+    footerBackgroundOpacity,
+    footerBackgroundComponent,
+    footerBackgroundColor,
+  ]);
 
   return (
     <>
       <StatusBar
         barStyle="dark-content"
-        backgroundColor={'transparent'}
+        backgroundColor={"transparent"}
         translucent
       />
-      <KeyboardAvoidingView style={styles.container} behavior={'padding'}>
-        <View style={{ opacity: 0 }} pointerEvents={'none'}>
+      <KeyboardAvoidingView style={styles.container} behavior={"padding"}>
+        <View
+          style={{
+            opacity: 0,
+          }}
+          pointerEvents={"none"}
+        >
           {headerComponent}
         </View>
         <ScrollView
@@ -157,7 +135,7 @@ export const ScreenContainer = (props: ScreenContainerProps) => {
           contentContainerStyle={styles.scrollViewContent}
           showsHorizontalScrollIndicator={false}
           showsVerticalScrollIndicator={false}
-          overScrollMode={!overScroll ? 'never' : 'auto'}
+          overScrollMode={!overScroll ? "never" : "auto"}
           alwaysBounceVertical={false}
           scrollEventThrottle={16}
           onScroll={(event) => {
@@ -175,12 +153,12 @@ export const ScreenContainer = (props: ScreenContainerProps) => {
           <View style={styles.childrenContainer}>{children}</View>
         </ScrollView>
         <View style={styles.headerContainer}>
-          {headerBackgroundComponent}
+          {headerBackgroundComponentContainer}
           {headerComponent}
         </View>
       </KeyboardAvoidingView>
       <View style={styles.footerContainer}>
-        {footerBackgroundComponent}
+        {footerBackgroundComponentContainer}
         {footerComponent}
       </View>
     </>
@@ -193,7 +171,7 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
-    overflow: 'visible',
+    overflow: "visible",
   },
   scrollViewContent: {
     flexGrow: 1,
@@ -202,13 +180,13 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   headerContainer: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     right: 0,
     left: 0,
   },
   headerBackground: {
-    position: 'absolute',
+    position: "absolute",
     top: -100,
     right: -100,
     bottom: 0,
@@ -216,7 +194,7 @@ const styles = StyleSheet.create({
   },
   footerContainer: {},
   footerBackground: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     right: -100,
     bottom: -100,
