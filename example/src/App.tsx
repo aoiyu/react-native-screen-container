@@ -1,31 +1,15 @@
-import * as React from 'react';
+import * as React from "react";
 
-import { StyleSheet, View, Text } from 'react-native';
-import { multiply } from 'react-native-screen-container';
+import { Text, TextInput } from "react-native";
+import { ScreenContainer } from "react-native-screen-container";
 
 export default function App() {
-  const [result, setResult] = React.useState<number | undefined>();
-
-  React.useEffect(() => {
-    multiply(3, 7).then(setResult);
-  }, []);
-
   return (
-    <View style={styles.container}>
-      <Text>Result: {result}</Text>
-    </View>
+    <ScreenContainer>
+      {new Array(50).fill(0).map(() => (
+        <Text>text</Text>
+      ))}
+      <TextInput defaultValue={"input here"} />
+    </ScreenContainer>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  box: {
-    width: 60,
-    height: 60,
-    marginVertical: 20,
-  },
-});
