@@ -1,6 +1,10 @@
 # react-native-screen-container
 
-well integrated screen container 
+Screen container component for React-Native
+
+This library is developed for use with [react-native-safe-area-context](https://github.com/th3rdwave/react-native-safe-area-context)
+`SafeAreaView` should be used as little as possible, as it will rattle depending on the timing of rendering.
+In that case, you would use `SafeAreaView` in an `App` component, for example, but you may want to place headers and footers ignoring safe area.
 
 ## Installation
 
@@ -8,14 +12,29 @@ well integrated screen container
 npm install react-native-screen-container
 ```
 
+or
+
+```sh
+yarn add react-native-screen-container
+```
+
 ## Usage
 
-```js
-import { multiply } from 'react-native-screen-container';
+```tsx
+<ScreenContainer>
+  /* Your screen content */
+</ScreenContainer>
+```
 
-// ...
+### with additional header / footer component
 
-const result = await multiply(3, 7);
+```tsx
+<ScreenContainer
+  headerComponent={<SomeHeaderComponent />} {/* <-- Your header component */}
+  footerComponent={<SomeFooterComponent />} {/* <-- Your header component */}
+  >
+  {/* Your screen content here */}
+</ScreenContainer>
 ```
 
 ## Contributing
@@ -25,6 +44,8 @@ See the [contributing guide](CONTRIBUTING.md) to learn how to contribute to the 
 ## License
 
 MIT
+
+
 
 ---
 
