@@ -122,12 +122,7 @@ export const ScreenContainer = (props: ScreenContainerProps) => {
         translucent
       />
       <KeyboardAvoidingView style={styles.container} behavior={"padding"}>
-        <View
-          style={{
-            opacity: 0,
-          }}
-          pointerEvents={"none"}
-        >
+        <View style={{ opacity: 0 }} pointerEvents={"none"}>
           {headerComponent}
         </View>
         <ScrollView
