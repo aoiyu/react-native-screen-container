@@ -5,8 +5,11 @@
     "paths": {
       "react-native-screen-container": ["./src/index"]
     },
+    "allowJs": false,
     "allowUnreachableCode": false,
     "allowUnusedLabels": false,
+    "declaration": true,
+    "declarationMap": true,
     "esModuleInterop": true,
     "importsNotUsedAsValues": "error",
     "forceConsistentCasingInFileNames": true,
@@ -21,9 +24,10 @@
     "noUncheckedIndexedAccess": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
+    "outDir": "dist",
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "strict": true,
-    "target": "esnext",
+    "target": "esnext"
   }
 }

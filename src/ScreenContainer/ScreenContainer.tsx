@@ -19,18 +19,25 @@ import type { ReactNode } from "react";
 import React, { useMemo, useState } from "react";
 
 export type ScreenContainerProps = {
-  headerComponent?: ReactNode;
-  footerComponent?: ReactNode;
-  headerBackgroundComponent?: ReactNode;
-  footerBackgroundComponent?: ReactNode;
+  headerComponent?: ReactNode | ((opacity: number) => ReactNode);
+  footerComponent?: ReactNode | ((opacity: number) => ReactNode);
+  headerBackgroundComponent?: ReactNode | ((opacity: number) => ReactNode);
+  footerBackgroundComponent?: ReactNode | ((opacity: number) => ReactNode);
   headerBackgroundColor?: ColorValue;
   footerBackgroundColor?: ColorValue;
-  fadingRange?: number;
+  disableHeaderPadding?: boolean;
+  disableFooterPadding?: boolean;
+  headerAnimation?: "none" | "fade";
+  footerAnimation?: "none" | "fade";
+  headerFadingRange?: number;
+  footerFadingRange?: number;
   overScroll?: boolean;
 } & ViewProps;
 
 export const ScreenContainer = (props: ScreenContainerProps) => {
   const {
+    headerAnimation = "none",
+    footerAnimation = "none",
     headerComponent,
     footerComponent,
     headerBackgroundComponent,
@@ -38,44 +45,73 @@ export const ScreenContainer = (props: ScreenContainerProps) => {
     headerBackgroundColor,
     footerBackgroundColor,
     overScroll = true,
+    disableHeaderPadding = false,
+    disableFooterPadding = false,
     children,
   } = props;
 
-  const fadingRange =
-    props.fadingRange != null
-      ? props.fadingRange > 0
-        ? props.fadingRange
+  const headerFadingRange = useMemo(() => {
+    return props.headerFadingRange != null
+      ? props.headerFadingRange > 0
+        ? props.headerFadingRange
         : 0.00001 // value enough to make opacity 1 immediately
       : 8;
+  }, [props.headerFadingRange]);
+
+  const footerFadingRange = useMemo(() => {
+    return props.footerFadingRange != null
+      ? props.footerFadingRange > 0
+        ? props.footerFadingRange
+        : 0.00001 // value enough to make opacity 1 immediately
+      : 8;
+  }, [props.footerFadingRange]);
 
   const [scrollViewLayoutHeight, setScrollViewLayoutHeight] = useState(
-    Number.MAX_VALUE
+    Number.MAX_SAFE_INTEGER
   );
   const [scrollViewContentHeight, setScrollViewContentHeight] = useState(0);
   const [scrollViewScrollYOffset, setScrollViewScrollYOffset] = useState(0);
 
-  const [headerBackgroundOpacity, setHeaderBackgroundOpacity] = useState(0);
-  const footerBackgroundOpacity = useMemo(
-    () =>
-      clamp(
-        -(
-          scrollViewLayoutHeight -
-          scrollViewContentHeight -
-          -scrollViewScrollYOffset
-        ) / fadingRange,
-        0,
-        1
-      ),
-    [
-      fadingRange,
-      scrollViewContentHeight,
-      scrollViewLayoutHeight,
-      scrollViewScrollYOffset,
-    ]
-  );
+  const headerBackgroundOpacity = useMemo(() => {
+    switch (headerAnimation) {
+      case "none":
+        return 1;
+      case "fade":
+        return clamp(scrollViewScrollYOffset / headerFadingRange, 0, 1);
+    }
+  }, [
+    headerAnimation,
+    headerFadingRange,
+    scrollViewContentHeight,
+    scrollViewLayoutHeight,
+    scrollViewScrollYOffset,
+  ]);
 
-  const headerBackgroundComponentContainer = useMemo(() => {
-    return (
+  const footerBackgroundOpacity = useMemo(() => {
+    switch (footerAnimation) {
+      case "none":
+        return 1;
+      case "fade":
+        return clamp(
+          -(
+            scrollViewLayoutHeight -
+            scrollViewContentHeight -
+            -scrollViewScrollYOffset
+          ) / footerFadingRange,
+          0,
+          1
+        );
+    }
+  }, [
+    footerAnimation,
+    footerFadingRange,
+    scrollViewContentHeight,
+    scrollViewLayoutHeight,
+    scrollViewScrollYOffset,
+  ]);
+
+  const headerBackgroundComponentContainer = useMemo(
+    () => (
       <View
         style={[
           styles.headerBackground,
@@ -85,17 +121,16 @@ export const ScreenContainer = (props: ScreenContainerProps) => {
           },
         ]}
       >
-        {headerBackgroundComponent}
+        {typeof headerBackgroundComponent === "function"
+          ? headerBackgroundComponent(headerBackgroundOpacity)
+          : headerBackgroundComponent}
       </View>
-    );
-  }, [
-    headerBackgroundOpacity,
-    headerBackgroundComponent,
-    headerBackgroundColor,
-  ]);
+    ),
+    [headerBackgroundOpacity, headerBackgroundComponent, headerBackgroundColor]
+  );
 
-  const footerBackgroundComponentContainer = useMemo(() => {
-    return (
+  const footerBackgroundComponentContainer = useMemo(
+    () => (
       <View
         style={[
           styles.footerBackground,
@@ -105,14 +140,13 @@ export const ScreenContainer = (props: ScreenContainerProps) => {
           },
         ]}
       >
-        {footerBackgroundComponent}
+        {typeof footerBackgroundComponent === "function"
+          ? footerBackgroundComponent(footerBackgroundOpacity)
+          : footerBackgroundComponent}
       </View>
-    );
-  }, [
-    footerBackgroundOpacity,
-    footerBackgroundComponent,
-    footerBackgroundColor,
-  ]);
+    ),
+    [footerBackgroundOpacity, footerBackgroundComponent, footerBackgroundColor]
+  );
 
   return (
     <>
@@ -122,9 +156,13 @@ export const ScreenContainer = (props: ScreenContainerProps) => {
         translucent
       />
       <KeyboardAvoidingView style={styles.container} behavior={"padding"}>
-        <View style={{ opacity: 0 }} pointerEvents={"none"}>
-          {headerComponent}
-        </View>
+        {headerComponent != null && !disableHeaderPadding && (
+          <View style={{ opacity: 0 }} pointerEvents={"none"}>
+            {typeof headerComponent === "function"
+              ? headerComponent(headerBackgroundOpacity)
+              : headerComponent}
+          </View>
+        )}
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollViewContent}
@@ -133,10 +171,9 @@ export const ScreenContainer = (props: ScreenContainerProps) => {
           overScrollMode={!overScroll ? "never" : "auto"}
           alwaysBounceVertical={false}
           scrollEventThrottle={16}
+          decelerationRate={"normal"}
           onScroll={(event) => {
-            const yOffset = event.nativeEvent.contentOffset.y;
-            setScrollViewScrollYOffset(yOffset);
-            setHeaderBackgroundOpacity(clamp(yOffset / fadingRange, 0, 1));
+            setScrollViewScrollYOffset(event.nativeEvent.contentOffset.y);
           }}
           onContentSizeChange={(_, contentHeight) => {
             setScrollViewContentHeight(contentHeight);
@@ -145,16 +182,28 @@ export const ScreenContainer = (props: ScreenContainerProps) => {
             setScrollViewLayoutHeight(event.nativeEvent.layout.height);
           }}
         >
-          <View style={styles.childrenContainer}>{children}</View>
+          {children}
         </ScrollView>
-        <View style={styles.headerContainer}>
+        <View style={styles.headerBackgroundContainer}>
           {headerBackgroundComponentContainer}
-          {headerComponent}
+          {typeof headerComponent === "function"
+            ? headerComponent(headerBackgroundOpacity)
+            : headerComponent}
         </View>
       </KeyboardAvoidingView>
-      <View style={styles.footerContainer}>
-        {footerBackgroundComponentContainer}
-        {footerComponent}
+      <View>
+        <View
+          style={
+            disableFooterPadding
+              ? styles.footerNonPaddingContainer
+              : styles.footerContainer
+          }
+        >
+          {footerBackgroundComponentContainer}
+          {typeof footerComponent === "function"
+            ? footerComponent(footerBackgroundOpacity)
+            : footerComponent}
+        </View>
       </View>
     </>
   );
@@ -171,10 +220,7 @@ const styles = StyleSheet.create({
   scrollViewContent: {
     flexGrow: 1,
   },
-  childrenContainer: {
-    flexShrink: 0,
-  },
-  headerContainer: {
+  headerBackgroundContainer: {
     position: "absolute",
     top: 0,
     right: 0,
@@ -188,6 +234,12 @@ const styles = StyleSheet.create({
     left: -100,
   },
   footerContainer: {},
+  footerNonPaddingContainer: {
+    position: "absolute",
+    right: 0,
+    bottom: 0,
+    left: 0,
+  },
   footerBackground: {
     position: "absolute",
     top: 0,
